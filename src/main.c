@@ -10,6 +10,7 @@ int main(void) {
     ClearBackground(GAME_BG);
 
     game_control(&game_state);
+    draw_menu(&game_state);
     draw_grid_cells(&game_state);
     draw_piece(&game_state.current);
     draw_grid();

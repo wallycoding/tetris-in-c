@@ -2,6 +2,7 @@
 #include <raylib.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 typedef enum TETROMINO_TYPE_T {
   TETROMINO_I,
@@ -52,10 +53,10 @@ static tetromino_t tetrominoes[] = {
         {
             .shape =
                 {
-                    {-1, 0},
+                    {-1, 1},
+                    {0, 1},
                     {0, 0},
-                    {0, -1},
-                    {1, 0},
+                    {1, 1},
                 },
             .color = {128, 0, 128, 255},
         },

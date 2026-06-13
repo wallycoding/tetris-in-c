@@ -3,9 +3,7 @@
 // Private helpers
 
 static inline tetromino_type_t rand_tetromino() {
-  static int i = 0;
-  i = (i+1) % 7; 
-  return i;
+  return xs32_rand() % 7;
 }
 
 static inline gpos_t rotate_piece(int32_t r, gpos_t gpos) {
@@ -32,18 +30,52 @@ void draw_grid() {
     DrawLineEx(
       (Vector2) { GMARGIN, GMARGIN + (i * SQUARE_SIZE) },
       (Vector2) { GMARGIN + GRID_W, + GMARGIN + (i * SQUARE_SIZE) },
-      GLINE_SIZE,
-      DARKGREEN
+      GLINE_SIZE * (i == 0 || i == GRID_ROWS) ? 2 : 1,
+      DARKGRAY
     );
     if (i > GRID_COLS) continue;
     // render x axis
     DrawLineEx(
       (Vector2) { GMARGIN + (i * SQUARE_SIZE), GMARGIN },
       (Vector2) { GMARGIN + (i * SQUARE_SIZE), GMARGIN + GRID_H },
-      GLINE_SIZE,
-      DARKGREEN
+      GLINE_SIZE * (i == 0 || i == GRID_COLS) ? 2 : 1,
+      DARKGRAY
     );
   }
+}
+
+static void draw_square(Vector2 spos, Vector2 epos, Color color) {
+
+  const int32_t border = GLINE_SIZE*2;
+
+  DrawRectangleV(
+    spos,
+    epos,
+    color
+  );
+
+  DrawRectangleV(
+    (Vector2){ spos.x+border, spos.y },
+    (Vector2){ epos.x-border, epos.y },
+    (Color){
+      color.r >> (unsigned char)1,
+      color.g >> (unsigned char)1,
+      color.b >> (unsigned char)1,
+      color.a/2
+    }
+  );
+
+  DrawRectangleV(
+    (Vector2){ spos.x+(SQUARE_SIZE-(border * 3)- border * 3), spos.y+border+(SQUARE_SIZE-(border * 3)- border * 3) },
+    (Vector2){ border * 4, border * border },
+    (Color){
+      color.r >> (unsigned char)1,
+      color.g >> (unsigned char)1,
+      color.b >> (unsigned char)1,
+      color.a/2
+    }
+  );
+
 }
 
 void draw_piece(piece_t* p) {
@@ -51,7 +83,7 @@ void draw_piece(piece_t* p) {
   for (int32_t i = 0; i < 4; i++) {
     gpos_t rpos = rotate_piece(p->rotation, t->shape[i]);
     Vector2 pos = get_grid_pos((gpos_t){ p->position.x + rpos.x, p->position.y + rpos.y });
-    DrawRectangleV(
+    draw_square(
       pos,
       (Vector2) {SQUARE_SIZE, SQUARE_SIZE},
       t->color
@@ -63,13 +95,26 @@ void draw_grid_cells(game_state_t* gs) {
   for (int32_t y = 0; y < GRID_ROWS; y++) {
     for (int32_t x = 0; x < GRID_COLS; x++) {
       if (!gs->grid[y][x]) continue;
-      DrawRectangleV(
+      draw_square(
         get_grid_pos((gpos_t) {x, y}),
         (Vector2) {SQUARE_SIZE, SQUARE_SIZE},
         tetrominoes[gs->grid[y][x] - 1].color
       );
     }
   }
+}
+
+void draw_menu(game_state_t* gs) {
+
+  const int32_t start_panel = GMARGIN * 2 + GRID_W;
+  piece_t p = {.rotation=0};
+  DrawText("Fun Tetris", start_panel, GMARGIN, 32, WHITE);
+  for (int32_t i = 0; i < 4; i++) {
+    p.type = gs->nexts[i];
+    p.position = (gpos_t){GRID_COLS + 2, (i+1) * 3};
+    draw_piece(&p);
+  }
+
 }
 
 // Game functions 
@@ -82,9 +127,12 @@ game_state_t init_game() {
       .position=GRID_START_POSITION,
       .rotation=0
     },
+    .nexts={0},
     .fall_distance=.0,
+    .game_over=false
   };
   memset(&gs.grid, 0, sizeof(gs.grid) / sizeof(gs.grid[0][0]));
+  for (int i = 0; i < 4; i++) gs.nexts[i] = rand_tetromino();
   return gs;
 }
 
@@ -148,26 +196,25 @@ void update_grid_cells(game_state_t* gs) {
 
 void next_piece(game_state_t* gs) {
   const tetromino_t* t = &tetrominoes[gs->current.type];
-
   gs->current = (piece_t){
-    .type=rand_tetromino(),
+    .type=gs->nexts[0],
     .position=GRID_START_POSITION,
     .rotation=0
   };
-
+  if (check_game_over(gs)) return;
+  for (int i = 1; i < 4; i++) gs->nexts[i - 1] = gs->nexts[i];
+  gs->nexts[3] = rand_tetromino();
   gs->fall_distance = .0;
 }
 
 void game_control(game_state_t* gs) {
-  float dt = GetFrameTime();
-  gs->fall_distance += dt * 4.0;
-
+  if (gs->game_over) return;
   player_controls(gs);
   falling_control(gs);
-
 }
 
 void player_controls(game_state_t* gs) {
+
   piece_t pcopy = gs->current;
   switch(GetKeyPressed()) {
     case KEY_UP:
@@ -178,7 +225,7 @@ void player_controls(game_state_t* gs) {
         pcopy.position.x += gaps[i];
         if (!has_collision(gs, &pcopy)) break;
       }
-      gs->current = pcopy;
+      if (!has_collision(gs, &pcopy)) gs->current = pcopy;
       break;
     case KEY_LEFT:
       pcopy.position.x--;
@@ -196,9 +243,12 @@ void player_controls(game_state_t* gs) {
 }
 
 void falling_control(game_state_t* gs) {
+  float dt = GetFrameTime();
+  gs->fall_distance += dt * 4.0f;
+
   float fd = gs->fall_distance;
   piece_t pcopy = gs->current;
-  if (fd > (IsKeyDown(KEY_DOWN) ? 0.5f : 2.0f)) {
+  if (fd > (IsKeyDown(KEY_DOWN) ? 0.4f : 2.0f)) {
     pcopy.position.y++;
     fd = .0;
   }
@@ -210,4 +260,13 @@ void falling_control(game_state_t* gs) {
   };
   gs->fall_distance = fd;
   gs->current = pcopy;
+}
+
+bool check_game_over(game_state_t* gs) {
+  const tetromino_t* t = &tetrominoes[gs->current.type];
+  if (
+    has_collision(gs, &gs->current) && 
+    has_locked(gs, &gs->current)
+  ) gs->game_over = true;
+  return gs->game_over;
 }
