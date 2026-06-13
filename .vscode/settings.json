@@ -1,0 +1,14 @@
+{
+  "workbench.editorAssociations": {
+    "*.svg": "editor.excalidraw"
+  },
+  "cSpell.words": [
+    "GLINE",
+    "GMARGIN",
+    "rpos",
+    "Tetris",
+    "tetrominoes",
+    "TETRONOMIES",
+    "tetronomo"
+  ]
+}
