@@ -1,17 +1,17 @@
 #ifndef TETRIS_H
 #define TETRIS_H
 
-#include <raylib.h>
-#include <stdint.h>
+#include "tetrominoes.h"
 
 #define GRID_ROWS 20
-#define GRID_COLS 10
+#define GRID_COLS 11
 #define SQUARE_SIZE 30
 #define GLINE_SIZE 2.0f
 #define GMARGIN 30
 
 #define GRID_W (GRID_COLS * SQUARE_SIZE)
 #define GRID_H (GRID_ROWS * SQUARE_SIZE)
+#define GRID_START_POSITION (gpos_t){(GRID_COLS/2), 1}
 
 #define GAME_PANEL 300
 #define GAME_W (GMARGIN * 2 + GRID_W + GAME_PANEL)
@@ -19,110 +19,29 @@
 
 #define GAME_BG ((Color){24, 28, 25})
 
-typedef enum TETROMINO_TYPE_T {
-  TETROMINO_I,
-  TETROMINO_O,
-  TETROMINO_T,
-  TETROMINO_S,
-  TETROMINO_Z,
-  TETROMINO_J,
-  TETROMINO_L,
-} tetromino_type_t;
+typedef struct PIECE_T {
+  tetromino_type_t type;
+  gpos_t position;
+  int32_t rotation;
+} piece_t;
 
-typedef struct GPOS_T {
-  int32_t x;
-  int32_t y;
-} gpos_t;
-
-typedef gpos_t tetromino_shape_t[4];
-
-typedef struct TETROMINO_T {
-  tetromino_shape_t shape;
-  Color color;
-} tetromino_t;
-
-static tetromino_t tetrominoes[] =
-    {
-        [TETROMINO_I] =
-            {
-                .shape =
-                    {
-                        {-1, 0},
-                        {0, 0},
-                        {1, 0},
-                        {2, 0},
-                    },
-                .color = {0, 255, 255, 255},
-            },
-        [TETROMINO_O] =
-            {
-                .shape =
-                    {
-                        {-1, 0},
-                        {0, 0},
-                        {-1, 1},
-                        {0, 1},
-                    },
-                .color = {255, 255, 0, 255},
-            },
-        [TETROMINO_T] =
-            {
-                .shape =
-                    {
-                        {-1, 0},
-                        {0, 0},
-                        {0, -1},
-                        {1, 0},
-                    },
-                .color = {128, 0, 128, 255},
-            },
-        [TETROMINO_S] =
-            {
-                .shape =
-                    {
-                        {-1, 0},
-                        {0, 0},
-                        {0, 1},
-                        {1, 1},
-                    },
-                .color = {0, 255, 0, 255},
-            },
-        [TETROMINO_Z] =
-            {
-                .shape =
-                    {
-                        {0, 0},
-                        {1, 0},
-                        {-1, 1},
-                        {0, 1},
-                    },
-                .color = {255, 0, 0, 255},
-            },
-        [TETROMINO_J] =
-            {
-                .shape =
-                    {
-                        {-1, 0},
-                        {0, 0},
-                        {1, 0},
-                        {-1, 1},
-                    },
-                .color = {0, 0, 255, 255},
-            },
-        [TETROMINO_L] =
-            {
-                .shape =
-                    {
-                        {-1, 0},
-                        {0, 0},
-                        {1, 0},
-                        {1, 1},
-                    },
-                .color = {255, 165, 0, 255},
-            },
-};
+typedef struct game_state_t {
+  int32_t grid[GRID_ROWS][GRID_COLS];
+  piece_t current;
+  float fall_distance;
+} game_state_t;
 
 void draw_grid();
-void draw_piece(tetromino_type_t type, gpos_t gpos, int32_t r);
+void draw_piece(piece_t* p);
+void draw_grid_cells(game_state_t* gs);
+
+game_state_t init_game();
+bool has_locked(game_state_t* gs, piece_t* p);
+bool has_collision(game_state_t* gs, piece_t* p);
+void update_grid_cells(game_state_t* gs);
+void next_piece(game_state_t* gs);
+void game_control(game_state_t* gs);
+void player_controls(game_state_t* gs);
+void falling_control(game_state_t* gs);
 
 #endif

@@ -3,16 +3,15 @@
 int main(void) {
 
   InitWindow(GAME_W, GAME_H, "Tetris");
-
-  int r = 0;
+  game_state_t game_state = init_game();
 
   while(!WindowShouldClose()) {
     BeginDrawing();
     ClearBackground(GAME_BG);
 
-    if (IsKeyPressed(KEY_UP)) r = (r+1) & 3; // 011
-
-    draw_piece(TETROMINO_T, (gpos_t){3, 5}, r);
+    game_control(&game_state);
+    draw_grid_cells(&game_state);
+    draw_piece(&game_state.current);
     draw_grid();
 
     EndDrawing();
