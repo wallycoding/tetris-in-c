@@ -31,6 +31,14 @@ typedef struct game_state_t {
   tetromino_type_t nexts[4];
   float fall_distance;
   bool game_over;
+
+  Sound sound_drop;
+  Sound sound_lineclear;
+  Sound sound_move;
+  Sound sound_rotate;
+
+  Music music;
+
 } game_state_t;
 
 void draw_grid();
@@ -47,6 +55,7 @@ void game_control(game_state_t* gs);
 void player_controls(game_state_t* gs);
 void falling_control(game_state_t* gs);
 bool check_game_over(game_state_t* gs);
+void close_game(game_state_t* gs);
 
 static inline uint32_t xs32_rand() {
   static uint32_t s;

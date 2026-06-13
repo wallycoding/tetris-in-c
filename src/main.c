@@ -3,9 +3,14 @@
 int main(void) {
 
   InitWindow(GAME_W, GAME_H, "Tetris");
+  InitAudioDevice();
   game_state_t game_state = init_game();
+  PlayMusicStream(game_state.music);
 
+  SetTargetFPS(60);
   while(!WindowShouldClose()) {
+    UpdateMusicStream(game_state.music);
+
     BeginDrawing();
     ClearBackground(GAME_BG);
 
@@ -18,7 +23,8 @@ int main(void) {
     EndDrawing();
   }
 
+  close_game(&game_state);
+  CloseAudioDevice();
   CloseWindow();
-
   return 0;
 }

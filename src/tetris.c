@@ -129,7 +129,15 @@ game_state_t init_game() {
     },
     .nexts={0},
     .fall_distance=.0,
-    .game_over=false
+    .game_over=false,
+
+    .sound_drop=LoadSound("./assets/drop.wav"),
+    .sound_lineclear=LoadSound("./assets/lineclear.wav"),
+    .sound_move=LoadSound("./assets/move.wav"),
+    .sound_rotate=LoadSound("./assets/rotate.wav"),
+
+    .music=LoadMusicStream("./assets/music.wav")
+
   };
   memset(&gs.grid, 0, sizeof(gs.grid) / sizeof(gs.grid[0][0]));
   for (int i = 0; i < 4; i++) gs.nexts[i] = rand_tetromino();
@@ -173,6 +181,7 @@ void update_grid_cells(game_state_t* gs) {
     gs->grid[pos.y][pos.x] = gs->current.type + 1;
   }
 
+  int count_clear_lines = 0;
   for (int32_t y = GRID_ROWS-1; y >= 0; y--) {
     bool line_full = true;
     for (int32_t x = 0; x < GRID_COLS; x++) {
@@ -182,6 +191,7 @@ void update_grid_cells(game_state_t* gs) {
       }
     }
     if (!line_full) continue;
+    count_clear_lines++;
     memset(&gs->grid[y], 0, sizeof(gs->grid[0][0]) * GRID_COLS);
     for (int32_t yy = y; yy > 0; yy--) {
       for (int32_t x = 0; x < GRID_COLS; x++) {
@@ -192,6 +202,7 @@ void update_grid_cells(game_state_t* gs) {
     y++;
   }
 
+  if (count_clear_lines) PlaySound(gs->sound_lineclear);
 }
 
 void next_piece(game_state_t* gs) {
@@ -226,16 +237,19 @@ void player_controls(game_state_t* gs) {
         if (!has_collision(gs, &pcopy)) break;
       }
       if (!has_collision(gs, &pcopy)) gs->current = pcopy;
+      PlaySound(gs->sound_rotate);
       break;
     case KEY_LEFT:
       pcopy.position.x--;
       if (has_collision(gs, &pcopy)) break;
       gs->current.position = pcopy.position;
+      PlaySound(gs->sound_move);
       break;
-    case KEY_RIGHT:
+      case KEY_RIGHT:
       pcopy.position.x++;
       if (has_collision(gs, &pcopy)) break;
       gs->current.position = pcopy.position;
+      PlaySound(gs->sound_move);
       break;
     case KEY_TAB:
       gs->current.type = (gs->current.type+1) % 7;
@@ -256,6 +270,7 @@ void falling_control(game_state_t* gs) {
     if (!has_locked(gs, &pcopy)) return;
     update_grid_cells(gs);
     next_piece(gs);
+    PlaySound(gs->sound_drop);
     return;
   };
   gs->fall_distance = fd;
@@ -269,4 +284,12 @@ bool check_game_over(game_state_t* gs) {
     has_locked(gs, &gs->current)
   ) gs->game_over = true;
   return gs->game_over;
+}
+
+void close_game(game_state_t* gs) {
+  UnloadSound(gs->sound_drop);
+  UnloadSound(gs->sound_lineclear);
+  UnloadSound(gs->sound_move);
+  UnloadSound(gs->sound_rotate);
+  UnloadMusicStream(gs->music);
 }
