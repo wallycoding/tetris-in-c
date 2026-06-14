@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 typedef enum TETROMINO_TYPE_T {
   TETROMINO_I,
@@ -14,12 +16,12 @@ typedef enum TETROMINO_TYPE_T {
   TETROMINO_L,
 } tetromino_type_t;
 
-typedef struct GPOS_T {
+typedef struct INT32_VEC2_T {
   int32_t x;
   int32_t y;
-} gpos_t;
+} int32_vec2_t;
 
-typedef gpos_t tetromino_shape_t[4];
+typedef int32_vec2_t tetromino_shape_t[4];
 
 typedef struct TETROMINO_T {
   tetromino_shape_t shape;
@@ -58,7 +60,7 @@ static tetromino_t tetrominoes[] = {
                     {0, 0},
                     {1, 1},
                 },
-            .color = {128, 0, 128, 255},
+            .color = {255, 80, 250, 255},
         },
     [TETROMINO_S] =
         {
@@ -91,7 +93,7 @@ static tetromino_t tetrominoes[] = {
                     {1, 0},
                     {-1, 1},
                 },
-            .color = {0, 0, 255, 255},
+            .color = {56, 149, 255, 200},
         },
     [TETROMINO_L] =
         {

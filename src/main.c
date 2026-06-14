@@ -1,6 +1,6 @@
 #include "tetris.h"
 
-int main(void) {
+int32_t main(void) {
 
   InitWindow(GAME_W, GAME_H, "Tetris");
   InitAudioDevice();
@@ -19,6 +19,7 @@ int main(void) {
     draw_grid_cells(&game_state);
     draw_piece(&game_state.current);
     draw_grid();
+    draw_ghost_piece(&game_state);
 
     EndDrawing();
   }
